@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify
 
 import pymongo
 from flask_pymongo import PyMongo
