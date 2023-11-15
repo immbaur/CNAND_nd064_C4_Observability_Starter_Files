@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend-app
+  annotations:
+    "sidecar.jaegertracing.io/inject": "true"
 spec:
   replicas: 3
   selector:
@@ -16,6 +18,7 @@ spec:
       - name: backend
         # We advise you to build, push and use your own image, instead of using instructor's image.      
         image: immbaur/nd064-backend:latest
+        imagePullPolicy: "Always"
         ports:
         - containerPort: 8080
 ---
@@ -30,3 +33,24 @@ spec:
     - port: 8081
       targetPort: 8080
   type: LoadBalancer
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: backend
+  namespace: monitoring
+  labels:
+    app: backend
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  endpoints:
+  - port: backend
+    path: /metrics
+    interval: 15s
+  namespaceSelector:
+    matchNames:
+    - default
+    

@@ -1,6 +1,7 @@
 import logging
 import re
 import requests
+import time
 
 
 from flask import Flask, jsonify, render_template
@@ -88,6 +89,16 @@ def trace():
 
     return jsonify(jobs_info)
 
+@app.route("/test")
+def test():
+    logger.info(f"API /test called")
+
+    with tracer.start_span("test-span") as span:
+        logger.info(f"Hello from the test span!")
+        # Simulate some work
+        time.sleep(1)
+
+    return "API /test completed"
 
 if __name__ == "__main__":
     app.run(debug=True,)
