@@ -1,7 +1,11 @@
 from flask import Flask, render_template
 
-app = Flask(__name__)
+from prometheus_flask_exporter import PrometheusMetrics
 
+app = Flask(__name__)
+metrics = PrometheusMetrics(app)
+# static information as metric
+metrics.info("app_info", "Application info", version="1.0.0")
 
 @app.route("/")
 def homepage():

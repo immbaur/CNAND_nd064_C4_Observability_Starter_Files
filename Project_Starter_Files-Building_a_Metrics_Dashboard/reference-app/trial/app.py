@@ -2,7 +2,7 @@ import logging
 import re
 import requests
 import time
-
+from os import getenv
 
 from flask import Flask, jsonify, render_template
 from flask_opentracing import FlaskTracing
@@ -19,12 +19,14 @@ RequestsInstrumentor().instrument()
 
 metrics = PrometheusMetrics(app)
 # static information as metric
-metrics.info("app_info", "Application info", version="1.0.3")
+metrics.info("app_info", "Application info", version="1.0.0")
 
 logging.getLogger("").handlers = []
 logging.basicConfig(format="%(message)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+JAEGER_HOST = getenv('JAEGER_HOST', 'localhost')
+print(f"JAEGER_HOST: {JAEGER_HOST}")
 
 def init_tracer(service):
 
@@ -33,6 +35,7 @@ def init_tracer(service):
             "sampler": {"type": "const", "param": 1},
             "logging": True,
             "reporter_batch_size": 1,
+            "local_agent": {"reporting_host": JAEGER_HOST}
         },
         service_name=service,
         validate=True,
