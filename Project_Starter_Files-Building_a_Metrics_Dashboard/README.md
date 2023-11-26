@@ -94,69 +94,73 @@ Uptime KPI: This KPI measures the overall uptime of your service, aligning with 
 
 ## Setup:
 
-# Install Helm
+### Install Helm
 sudo zypper in git
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-# Install Grafana and Prometheus 
+### Install Grafana and Prometheus 
 kubectl create namespace monitoring
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-# helm repo add stable https://kubernetes-charts.storage.googleapis.com # this is deprecated
+### helm repo add stable https://kubernetes-charts.storage.googleapis.com # this is deprecated
 helm repo add stable https://charts.helm.sh/stable
 helm repo update
 helm install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring --kubeconfig /etc/rancher/k3s/k3s.yaml
 
-# Install Jaeger
+### Install Jaeger
+`
 kubectl create namespace observability
-# Please use the latest stable version
-export jaeger_version=v1.28.0 
+`
+### Please use the latest stable version
+`export jaeger_version=v1.28.0 
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/${jaeger_version}/deploy/crds/jaegertracing.io_jaegers_crd.yaml
 kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/${jaeger_version}/deploy/service_account.yaml
 kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/${jaeger_version}/deploy/role.yaml
 kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/${jaeger_version}/deploy/role_binding.yaml
 kubectl create -n observability -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/${jaeger_version}/deploy/operator.yaml
+`
+### Create “all-in-one” Jaeger instance
+`kubectl apply -f manifests/other/jaeger-instance.yaml`
 
-# Create “all-in-one” Jaeger instance
-kubectl apply -f manifests/other/jaeger-instance.yaml
-
-# Grant Cluster wide Permissions to Jaeger
-
+### Grant Cluster wide Permissions to Jaeger
+`
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/${jaeger_version}/deploy/cluster_role.yaml
 kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-operator/${jaeger_version}/deploy/cluster_role_binding.yaml
-
-# Port Forwarding
-
+`
+### Port Forwarding
+`
 kubectl port-forward svc/frontend --address 0.0.0.0 8080:8080
 kubectl port-forward svc/prometheus-grafana --address 0.0.0.0 3000:80 -n monitoring
 kubectl port-forward service/my-jaeger-query --address 0.0.0.0 16686:16686 -n observability
-
+`
 
 ## Notes
-
+`
 update requirements to latest available package version
 build app container images and push them to personal docker hub
-
+``
 docker build -t immbaur/nd064-trial:latest reference-app/trial/
-
+``
 test container locally 
 docker run -p 8082:8080 immbaur/nd064-trial:latest
-
+``
 push container 
 docker push immbaur/nd064-trial:latest
-
+`
 
 Update the deployment configurations to pull personal images 
-    - and to use jaeger sidecar injections
-    - service monitor, since apps and jaeger are on different namespaces
+* and to use jaeger sidecar injections
+* service monitor, since apps and jaeger are on different namespaces
 
 Add jaeger Grafana data soure, url: my-jaeger-query.observability.svc.cluster.local:16686
 
 Helpful commands, e.g. for trial service
-show metrics 
-curl localhost:8082/metrics
 
+`show metrics 
+curl localhost:8082/metrics
+``
 curl localhost:8082/
 curl localhost:8082/trace
 curl localhost:8082/test
-
+``
 kubectl logs -f -l app=trial --max-log-requests 20
+`
